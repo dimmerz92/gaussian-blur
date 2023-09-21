@@ -101,5 +101,11 @@ int main(int argc, char **argv) {
     // exclude unnecessary processes if required
     if (nproc > height) nproc = height;
 
-
+    // have all necessary processes convolve their images and return to ROOT
+    if (rank < nproc) {
+        // scatter process pixel counts
+        MPI_Scatter(counts, 1, MPI_INT, &items, 1, MPI_INT, ROOT,
+                    MPI_COMM_WORLD);
+        
+    }
 }
