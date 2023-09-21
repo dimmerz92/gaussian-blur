@@ -160,4 +160,14 @@ int main(int argc, char **argv) {
         flatten_image(final_local_bmp, final_flat_frag_img, local_height,
                       width, t_offset, b_offset);
     }
+
+    // receive convoluted fragments and put the image back together
+    if (rank == ROOT) {
+        // reinitialise counts and displs
+        int offset = 0;
+        for (int i = 0; i < nproc; i++) {
+            displs[i] = offset;
+            offset += allc[i] * width * RGB;
+        }
+    }
 }
