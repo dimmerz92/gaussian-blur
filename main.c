@@ -163,11 +163,18 @@ int main(int argc, char **argv) {
 
     // receive convoluted fragments and put the image back together
     if (rank == ROOT) {
-        // reinitialise counts and displs
+        // reinitialise displs
         int offset = 0;
         for (int i = 0; i < nproc; i++) {
             displs[i] = offset;
             offset += allc[i] * width * RGB;
+        }
+        
+        // allocate final flat image
+        size = allc[nproc - 1] + displs[nproc - 1];
+        if ((final_flat_img = (UCHAR *)malloc(size * sizeof(UCHAR))) == NULL) {
+            fprintf(stderr, "Malloc error: final_flat_img\n");
+            MPI_Abort(MPI_COMM_WORLD, 1);
         }
     }
 }
