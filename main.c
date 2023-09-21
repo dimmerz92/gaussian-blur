@@ -93,6 +93,7 @@ int main(int argc, char **argv) {
 
         // flatten image to 1D vector for scattering
         flatten_image(bmp, flat_img, height, width, 0, 0);
+        BMP_Free(bmp);
     }
 
     // broadcast main image height and width data
@@ -118,7 +119,10 @@ int main(int argc, char **argv) {
         // scatter the pixel data
         MPI_Scatterv(flat_img, counts, displs, MPI_UNSIGNED_CHAR,
                      flat_frag_img, MPI_UNSIGNED_CHAR, ROOT, MPI_COMM_WORLD);
-        if (rank == ROOT) free(flat_img);
+        if (rank == ROOT) {
+            free(flat_img);
+            free(counts);
+        }
 
         // convert image fragment to bmp for convolution
         local_height = items / width / RGB;
@@ -131,6 +135,7 @@ int main(int argc, char **argv) {
         applyConvolution(kernel, kernel_dim, origin, colour_max, local_bmp,
                          final_local_bmp);
         free_kernels(kernel, kernel_dim);
+        BMP_Free(local_bmp);
 
         // determine offsets for overlaps
         int t_offset, b_offset;
@@ -159,6 +164,8 @@ int main(int argc, char **argv) {
         // flatten the return image without overlaps
         flatten_image(final_local_bmp, final_flat_frag_img, local_height,
                       width, t_offset, b_offset);
+        BMP_Free(final_local_bmp);
+
     }
 
     // make all non-root threads wait for root to be ready to receive
@@ -193,12 +200,18 @@ int main(int argc, char **argv) {
                     final_flat_img, allc, displs, MPI_UNSIGNED_CHAR, ROOT,
                     MPI_COMM_WORLD);
         free(final_flat_frag_img);
+        if (rank == ROOT) {
+            free(allc);
+            free(displs);
+        }
     }
 
     // reconstruct the final image and save it
     if (rank == ROOT) {
         reconstruct_bmp(final_bmp, final_flat_img, height, width);
+        free(final_flat_img);
         BMP_WriteFile(final_bmp, argv[2]);
+        BMP_Free(final_bmp);
     }
 
     MPI_Finalize();
