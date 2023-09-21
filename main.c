@@ -147,6 +147,13 @@ int main(int argc, char **argv) {
             t_offset = 1;
             b_offset = 1;
         }
-        
+
+        // allocate return vector
+        size = (t_offset + b_offset) * width * RGB;
+        final_flat_frag_img = (UCHAR *)malloc(size * sizeof(UCHAR))
+        if (final_flat_frag_img == NULL) {
+            fprintf(stderr, "Malloc error: final_flat_frag_img\n");
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
     }
 }
