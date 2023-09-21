@@ -52,6 +52,29 @@ int main(int argc, char **argv) {
         BMP_CHECK_ERROR(stderr, -1);
         width = BMP_GetWidth(bmp);
         height = BMP_GetHeight(bmp);
+
+        // ensure nproc is not greater than height or image
+        if (nproc > height) nproc = height;
+
+        // allocate vectors for counts, allocations, and displacements
+        if ((counts = (int *)malloc(nproc * sizeof(int))) == NULL) {
+            fprintf(stderr, "Malloc error: counts\n");
+            free_kernels(kernel, kernel_dim);
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+        if ((allc = (int *)malloc(nproc * sizeof(int))) == NULL) {
+            fprintf(stderr, "Malloc error: allc\n");
+            free_kernels(kernel, kernel_dim);
+            free(counts);
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+        if ((displs = (int *)malloc(nproc * sizeof(int))) == NULL) {
+            fprintf(stderr, "Malloc error: displs\n");
+            free_kernels(kernel, kernel_dim);
+            free(counts);
+            free(allc);
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
         
     }
 }
