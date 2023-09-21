@@ -46,3 +46,11 @@ int parse_args(int argc, char *argv[], float *std_dev) {
 
     return 0;
 }
+
+/* frees the kernel items */
+void free_kernels(float **kernel, float kernel_dim) {
+    for (int i = 0; i < kernel_dim; i++) {
+        free(kernel[i]);
+    }
+    free(kernel);
+}
