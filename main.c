@@ -75,6 +75,19 @@ int main(int argc, char **argv) {
             free(allc);
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
-        
+
+        // allocate rows to processes
+        assign_rows(nproc, height, width, counts, allc, displs);
+
+        // allocate vector to send image fragments
+        size = counts[nproc - 1] + displs[nproc - 1];
+        if ((flat_img = (UCHAR *)malloc(size * sizeof(UCHAR))) == NULL) {
+            fprintf(stderr, "Malloc error: flat_img\n");
+            free_kernels(kernel, kernel_dim);
+            free(counts);
+            free(allc);
+            free(displs);
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
     }
 }
