@@ -118,5 +118,8 @@ int main(int argc, char **argv) {
         MPI_Scatterv(flat_img, counts, displs, MPI_UNSIGNED_CHAR,
                      flat_frag_img, MPI_UNSIGNED_CHAR, ROOT, MPI_COMM_WORLD);
         if (rank == ROOT) free(flat_img);
+
+        // convert image fragment to bmp for convolution
+        local_height = items / width / RGB;
     }
 }
