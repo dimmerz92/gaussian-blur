@@ -150,10 +150,14 @@ int main(int argc, char **argv) {
 
         // allocate return vector
         size = (t_offset + b_offset) * width * RGB;
-        final_flat_frag_img = (UCHAR *)malloc(size * sizeof(UCHAR))
+        final_flat_frag_img = (UCHAR *)malloc(size * sizeof(UCHAR));
         if (final_flat_frag_img == NULL) {
             fprintf(stderr, "Malloc error: final_flat_frag_img\n");
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
+
+        // flatten the return image without overlaps
+        flatten_image(final_local_bmp, final_flat_frag_img, local_height,
+                      width, t_offset, b_offset);
     }
 }
