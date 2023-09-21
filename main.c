@@ -107,5 +107,11 @@ int main(int argc, char **argv) {
         MPI_Scatter(counts, 1, MPI_INT, &items, 1, MPI_INT, ROOT,
                     MPI_COMM_WORLD);
         
+        // allocate local image fragment vectors
+        if ((flat_frag_img = (UCHAR *)malloc(items * sizeof(UCHAR))) == NULL) {
+            fprintf(stderr, "Malloc error: flat_frag_img\n");
+            free_kernels(kernel, kernel_dim);
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
     }
 }
