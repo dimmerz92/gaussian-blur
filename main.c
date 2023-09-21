@@ -1,4 +1,5 @@
 #include "headers.h"
+#define RGB 3
 
 int main(int argc, char **argv) {
     // declare all globals
@@ -121,5 +122,15 @@ int main(int argc, char **argv) {
 
         // convert image fragment to bmp for convolution
         local_height = items / width / RGB;
+        local_bmp = BMP_Create(width, local_height, 24);
+        reconstruct_bmp(local_bmp, flat_frag_img, local_height, width);
+        free(flat_frag_img);
+
+        // apply convolution to fragment
+        final_local_bmp = BMP_Create(width, local_height, 24);
+        applyConvolution(kernel, kernel_dim, origin, colour_max, local_bmp,
+                         final_local_bmp);
+        free_kernels(kernel, kernel_dim);
+        
     }
 }
