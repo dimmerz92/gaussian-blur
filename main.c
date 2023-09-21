@@ -5,7 +5,7 @@ int main(int argc, char **argv) {
     BMP *bmp, *local_bmp, *final_local_bmp, *final_bmp;
     clock_t start, finish;
     UCHAR *flat_img, *flat_frag_img, *final_flat_frag_img, *final_flat_img;
-    int nproc, rank, height, width, size, items;
+    int nproc, rank, height, width, local_height, size, items;
     int *counts, *allc, *displs;
     float std_dev, origin, kernel_dim, kernel_max, colour_max;
     float *kernel;
@@ -41,4 +41,17 @@ int main(int argc, char **argv) {
 
     generateGaussianKernel(kernel, kernel_dim, std_dev, origin, &kernel_max,
                            &colour_max);
+
+    // ROOT read and distribute image fragments
+    if (rank == ROOT) {
+        // start the clock
+        start = clock();
+
+        // read the input BMP and its metadata
+        bmp = BMP_ReadFile(argv[1]);
+        BMP_CHECK_ERROR(stderr, -1);
+        width = BMP_GetWidth(bmp);
+        height = BMP_GetHeight(bmp);
+        
+    }
 }
