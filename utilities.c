@@ -72,3 +72,20 @@ void assign_rows(int nproc, int height, int width, int *counts, int *allc,
         offset += counts[i];
     }
 }
+
+/* flattens a BMP image to a 1D vector to be read in increments of 3 (RGB) */
+void flatten_image(BMP *bmp, UCHAR *flattened_img, int height, int width,
+                   int top_offset, int bottom_offset) {
+    UCHAR r, g, b;
+    int accumulator = 0;
+
+    for (int row = 0 + top_offset; row < height - bottom_offset; row++) {
+        for (int col = 0; col < width; col++) {
+            BMP_GetPixelRGB(bmp, col, row, &r, &g, &b);
+            flattened_img[accumulator] = r;
+            flattened_img[accumulator + 1] = g;
+            flattened_img[accumulator + 2] = b;
+            accumulator += 3;
+        }
+    }
+}
