@@ -149,8 +149,8 @@ int main(int argc, char **argv) {
         }
 
         // allocate return vector
-        size = (t_offset + b_offset) * width * RGB;
-        final_flat_frag_img = (UCHAR *)malloc(size * sizeof(UCHAR));
+        items = (t_offset + b_offset) * width * RGB;
+        final_flat_frag_img = (UCHAR *)malloc(items * sizeof(UCHAR));
         if (final_flat_frag_img == NULL) {
             fprintf(stderr, "Malloc error: final_flat_frag_img\n");
             MPI_Abort(MPI_COMM_WORLD, 1);
@@ -160,6 +160,9 @@ int main(int argc, char **argv) {
         flatten_image(final_local_bmp, final_flat_frag_img, local_height,
                       width, t_offset, b_offset);
     }
+
+    // make all non-root threads wait for root to be ready to receive
+    if (rank != ROOT) MPI_Barrier(MPI_COMM_WORLD);
 
     // receive convoluted fragments and put the image back together
     if (rank == ROOT) {
@@ -176,5 +179,19 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Malloc error: final_flat_img\n");
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
+
+        // create final bmp image
+        final_bmp = BMP_Create(width, height, 24);
+
+        // sync with other threads
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    if (rank < nproc) {
+        // gather the image fragments
+        MPI_Gatherv(final_flat_frag_img, items, MPI_UNSIGNED_CHAR,
+                    final_flat_img, allc, displs, MPI_UNSIGNED_CHAR, ROOT,
+                    MPI_COMM_WORLD);
+        free(final_flat_frag_img);
     }
 }
