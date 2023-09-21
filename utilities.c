@@ -5,6 +5,7 @@
 #include "qdbmp.h"
 
 #define EXT ".bmp"
+#define RGB 3
 
 /* Checks if a given string is an int/float as atoi is unreliable on its own */
 int is_positive_number(char *str) {
@@ -53,4 +54,21 @@ void free_kernels(float **kernel, float kernel_dim) {
         free(kernel[i]);
     }
     free(kernel);
+}
+
+/* allocates rows and displacements, accounting for necessary overlaps */
+void assign_rows(int nproc, int height, int width, int *counts, int *allc,
+                 int *displs) {
+    int rows_per_proc = height / nproc;
+    int remainder = height % nproc;
+    int rows, overlap, offset = 0;
+
+    for (int i = 0; i < nproc; i++) {
+        rows = rows_per_proc + (i < remainder ? 1 : 0);
+        overlap = (nproc > 1 ? (i == 0 || i == nproc - 1 ? 1 : 2) : 0);
+        counts[i] = (rows + overlap) * width * RGB;
+        allc[i] = rows * width * RGB;
+        displs[i] = offset;
+        offset += counts[i];
+    }
 }
