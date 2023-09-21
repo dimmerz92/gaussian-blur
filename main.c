@@ -93,4 +93,13 @@ int main(int argc, char **argv) {
         // flatten image to 1D vector for scattering
         flatten_image(bmp, flat_img, height, width, 0, 0);
     }
+
+    // broadcast main image height and width data
+    MPI_Bcast(&height, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Bcast(&width, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
+
+    // exclude unnecessary processes if required
+    if (nproc > height) nproc = height;
+
+
 }
