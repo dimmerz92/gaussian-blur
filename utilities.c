@@ -74,6 +74,7 @@ void assign_rows(int nproc, int height, int width, int *counts, int *allc,
 }
 
 /* flattens a BMP image to a 1D vector to be read in increments of 3 (RGB) */
+/* allows for offsets to exclude overlaps */
 void flatten_image(BMP *bmp, UCHAR *flattened_img, int height, int width,
                    int top_offset, int bottom_offset) {
     UCHAR r, g, b;
@@ -85,6 +86,23 @@ void flatten_image(BMP *bmp, UCHAR *flattened_img, int height, int width,
             flattened_img[accumulator] = r;
             flattened_img[accumulator + 1] = g;
             flattened_img[accumulator + 2] = b;
+            accumulator += 3;
+        }
+    }
+}
+
+/* reconstructs a BMP image from 1D array containing pixel data read in */
+/* increments of 3 (RGB) */
+void reconstruct_bmp(BMP *bmp, UCHAR *img, int height, int width) {
+    UCHAR r, g, b;
+    int accumulator = 0;
+
+    for (int row = 0; row < height; row++) {
+        for (int col = 0; col < width; col++) {
+            r = round(img[accumulator]);
+            g = round(img[accumulator + 1]);
+            b = round(img[accumulator + 2]);
+            BMP_SetPixelRGB(bmp, col, row, r, g, b);
             accumulator += 3;
         }
     }
