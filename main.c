@@ -89,5 +89,8 @@ int main(int argc, char **argv) {
             free(displs);
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
+
+        // flatten image to 1D vector for scattering
+        flatten_image(bmp, flat_img, height, width, 0, 0);
     }
 }
