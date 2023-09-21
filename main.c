@@ -131,6 +131,22 @@ int main(int argc, char **argv) {
         applyConvolution(kernel, kernel_dim, origin, colour_max, local_bmp,
                          final_local_bmp);
         free_kernels(kernel, kernel_dim);
+
+        // determine offsets for overlaps
+        int t_offset, b_offset;
+        if (nproc == 1) {
+            t_offset = 0;
+            b_offset = 0;
+        } else if (rank == ROOT) {
+            t_offset = 0;
+            b_offset = 1;
+        } else if (rank == nproc - 1) {
+            t_offset = 1;
+            b_offset = 0;
+        } else {
+            t_offset = 1;
+            b_offset = 1;
+        }
         
     }
 }
