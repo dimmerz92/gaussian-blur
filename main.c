@@ -113,5 +113,10 @@ int main(int argc, char **argv) {
             free_kernels(kernel, kernel_dim);
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
+
+        // scatter the pixel data
+        MPI_Scatterv(flat_img, counts, displs, MPI_UNSIGNED_CHAR,
+                     flat_frag_img, MPI_UNSIGNED_CHAR, ROOT, MPI_COMM_WORLD);
+        if (rank == ROOT) free(flat_img);
     }
 }
