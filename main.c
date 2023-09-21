@@ -187,11 +187,19 @@ int main(int argc, char **argv) {
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
+    // gather the image fragments
     if (rank < nproc) {
-        // gather the image fragments
         MPI_Gatherv(final_flat_frag_img, items, MPI_UNSIGNED_CHAR,
                     final_flat_img, allc, displs, MPI_UNSIGNED_CHAR, ROOT,
                     MPI_COMM_WORLD);
         free(final_flat_frag_img);
     }
+
+    // reconstruct the final image and save it
+    if (rank == ROOT) {
+        reconstruct_bmp(final_bmp, final_flat_img, height, width);
+        BMP_WriteFile(final_bmp, argv[2]);
+    }
+
+    MPI_Finalize();
 }
