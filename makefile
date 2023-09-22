@@ -6,7 +6,7 @@ CEXES =  main
 all: ${CEXES}
 
 run:
-	mpiexec -np 4 ./main pencils.bmp out.bmp 20
+	mpiexec -np 4 ./main pencils.bmp out.bmp 10
 
 main: main.c ${COBJS}
 	${COMPILER} ${CFLAGS} main.c ${COBJS} -o main -lm
