@@ -54,9 +54,6 @@ int main(int argc, char **argv) {
         width = BMP_GetWidth(bmp);
         height = BMP_GetHeight(bmp);
 
-        // ensure nproc is not greater than height or image
-        if (nproc > height) nproc = height;
-
         // allocate vectors for counts, allocations, and displacements
         if ((counts = (int *)malloc(nproc * sizeof(int))) == NULL) {
             fprintf(stderr, "Malloc error: counts\n");
@@ -93,7 +90,6 @@ int main(int argc, char **argv) {
 
         // flatten image to 1D vector for scattering
         int offset = 0;
-
         for (int i = 0; i < nproc; i++) {
             from = (i == 0 || offset - 3 * std_dev < 0 ? 0 : offset - 3 * std_dev);
             to = from + counts[i] / width / RGB;
@@ -107,76 +103,64 @@ int main(int argc, char **argv) {
     MPI_Bcast(&height, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
     MPI_Bcast(&width, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-    // exclude unnecessary processes if required
-    if (nproc > height) nproc = height;
-
-    // have all necessary processes convolve their images and return to ROOT
-    if (rank < nproc) {
-        // scatter process pixel counts
-        MPI_Scatter(counts, 1, MPI_INT, &items, 1, MPI_INT, ROOT,
-                    MPI_COMM_WORLD);
-        
-        // allocate local image fragment vectors
-        if ((flat_frag_img = (UCHAR *)malloc(items * sizeof(UCHAR))) == NULL) {
-            fprintf(stderr, "Malloc error: flat_frag_img\n");
-            free_kernels(kernel, kernel_dim);
-            MPI_Abort(MPI_COMM_WORLD, 1);
-        }
-
-        // scatter the pixel data
-        MPI_Scatterv(flat_img, counts, displs, MPI_UNSIGNED_CHAR,
-                     flat_frag_img, items, MPI_UNSIGNED_CHAR, ROOT,
-                     MPI_COMM_WORLD);
-        if (rank == ROOT) {
-            free(flat_img);
-        }
-
-        // convert image fragment to bmp for convolution
-        local_height = items / width / RGB;
-        local_bmp = BMP_Create(width, local_height, 24);
-        reconstruct_bmp(local_bmp, flat_frag_img, local_height, width);
-        free(flat_frag_img);
-
-        // apply convolution to fragment
-        final_local_bmp = BMP_Create(width, local_height, 24);
-        applyConvolution(kernel, kernel_dim, origin, colour_max, local_bmp,
-                         final_local_bmp);
+    // scatter process pixel counts
+    MPI_Scatter(counts, 1, MPI_INT, &items, 1, MPI_INT, ROOT,
+                MPI_COMM_WORLD);
+    
+    // allocate local image fragment vectors
+    if ((flat_frag_img = (UCHAR *)malloc(items * sizeof(UCHAR))) == NULL) {
+        fprintf(stderr, "Malloc error: flat_frag_img\n");
         free_kernels(kernel, kernel_dim);
-        BMP_Free(local_bmp);
-
-        // determine offsets for overlaps
-        int rows_per_proc = height / nproc;
-        int remainder = height % nproc;
-        if (nproc == 1) {
-            from = 0;
-            to = local_height;
-        } else if (rank == ROOT) {
-            from = 0;
-            to = rows_per_proc + (rank < remainder ? 1 : 0);
-        } else if (rank == nproc - 1) {
-            from = 3 * std_dev;
-            to = local_height;
-        } else {
-            from = 3 * std_dev;
-            to = from + rows_per_proc + (rank < remainder ? 1 : 0);
-        }
-
-        // allocate return vector
-        items = (to - from) * width * RGB;
-        final_flat_frag_img = (UCHAR *)malloc(items * sizeof(UCHAR));
-        if (final_flat_frag_img == NULL) {
-            fprintf(stderr, "Malloc error: final_flat_frag_img\n");
-            MPI_Abort(MPI_COMM_WORLD, 1);
-        }
-
-        // flatten the return image without overlaps
-        flatten_image(final_local_bmp, final_flat_frag_img, from, to, width, 0);
-        BMP_Free(final_local_bmp);
-
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
-    // make all non-root threads wait for root to be ready to receive
-    // if (rank != ROOT) MPI_Barrier(MPI_COMM_WORLD);
+    // scatter the pixel data
+    MPI_Scatterv(flat_img, counts, displs, MPI_UNSIGNED_CHAR,
+                    flat_frag_img, items, MPI_UNSIGNED_CHAR, ROOT,
+                    MPI_COMM_WORLD);
+    if (rank == ROOT) free(flat_img);
+
+    // convert image fragment to bmp for convolution
+    local_height = items / width / RGB;
+    local_bmp = BMP_Create(width, local_height, 24);
+    reconstruct_bmp(local_bmp, flat_frag_img, local_height, width);
+    free(flat_frag_img);
+
+    // apply convolution to fragment
+    final_local_bmp = BMP_Create(width, local_height, 24);
+    applyConvolution(kernel, kernel_dim, origin, colour_max, local_bmp,
+                        final_local_bmp);
+    free_kernels(kernel, kernel_dim);
+    BMP_Free(local_bmp);
+
+    // determine offsets for overlaps
+    int rows_per_proc = height / nproc;
+    int remainder = height % nproc;
+    if (nproc == 1) {
+        from = 0;
+        to = local_height;
+    } else if (rank == ROOT) {
+        from = 0;
+        to = rows_per_proc + (rank < remainder ? 1 : 0);
+    } else if (rank == nproc - 1) {
+        from = 3 * std_dev;
+        to = local_height;
+    } else {
+        from = 3 * std_dev;
+        to = from + rows_per_proc + (rank < remainder ? 1 : 0);
+    }
+
+    // allocate return vector
+    items = (to - from) * width * RGB;
+    final_flat_frag_img = (UCHAR *)malloc(items * sizeof(UCHAR));
+    if (final_flat_frag_img == NULL) {
+        fprintf(stderr, "Malloc error: final_flat_frag_img\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+
+    // flatten the return image without overlaps
+    flatten_image(final_local_bmp, final_flat_frag_img, from, to, width, 0);
+    BMP_Free(final_local_bmp);
 
     // receive convoluted fragments and put the image back together
     if (rank == ROOT) {
@@ -196,9 +180,6 @@ int main(int argc, char **argv) {
 
         // create final bmp image
         final_bmp = BMP_Create(width, height, 24);
-
-        // sync with other threads
-        // MPI_Barrier(MPI_COMM_WORLD);
     }
 
     // gather the image fragments
@@ -221,7 +202,8 @@ int main(int argc, char **argv) {
         BMP_WriteFile(final_bmp, argv[2]);
         BMP_Free(final_bmp);
         finish = clock();
-        printf("Time taken: %ld\n", (finish - start) / CLOCKS_PER_SEC);
+        printf("Time taken: %f seconds\n",
+            (float)(finish - start) / CLOCKS_PER_SEC);
     }
 
     MPI_Finalize();
