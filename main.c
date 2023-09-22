@@ -183,16 +183,14 @@ int main(int argc, char **argv) {
     }
 
     // gather the image fragments
-    if (rank < nproc) {
-        MPI_Gatherv(final_flat_frag_img, items, MPI_UNSIGNED_CHAR,
-                    final_flat_img, counts, displs, MPI_UNSIGNED_CHAR, ROOT,
-                    MPI_COMM_WORLD);
-        free(final_flat_frag_img);
-        if (rank == ROOT) {
-            free(counts);
-            free(allc);
-            free(displs);
-        }
+    MPI_Gatherv(final_flat_frag_img, items, MPI_UNSIGNED_CHAR,
+                final_flat_img, counts, displs, MPI_UNSIGNED_CHAR, ROOT,
+                MPI_COMM_WORLD);
+    free(final_flat_frag_img);
+    if (rank == ROOT) {
+        free(counts);
+        free(allc);
+        free(displs);
     }
 
     // reconstruct the final image and save it
