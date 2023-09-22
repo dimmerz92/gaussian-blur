@@ -20,8 +20,8 @@
 * Reference: https://en.wikipedia.org/wiki/Gaussian_blur
 ******************************************************************************/
 void
-generateGaussianKernel (float **kernel, int kernel_dim, float sd, int origin,
-			float *kernel_max, float *colour_max)
+generateGaussianKernel (double **kernel, int kernel_dim, double sd, int origin,
+			double *kernel_max, double *colour_max)
 {
   int i, j;
   /*Initialise Accumulators/max vals */
@@ -190,8 +190,8 @@ bitmapFromSquareMatrix (float **mat, const char *filename, int mat_dim,
 * new_bmp - bitmap that will store the new convoluted image.
 ******************************************************************************/
 void
-applyConvolution (float **kernel, int kernel_dim, float kernel_origin,
-		  float colour_max, BMP * old_bmp, BMP * new_bmp)
+applyConvolution (double **kernel, int kernel_dim, double kernel_origin,
+		  double colour_max, BMP * old_bmp, BMP * new_bmp)
 {
   /*Declare all the bits we need */
   unsigned char r, g, b;
