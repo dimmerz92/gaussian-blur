@@ -5,8 +5,11 @@ CEXES =  main
 
 all: ${CEXES}
 
-gaussian: gaussian.c ${COBJS}
-	${COMPILER} ${CFLAGS} gaussian.c ${COBJS} -o gaussian -lm
+run:
+	mpiexec -np 4 ./main pencils.bmp out.bmp 20
+
+main: main.c ${COBJS}
+	${COMPILER} ${CFLAGS} main.c ${COBJS} -o main -lm
 
 %.o: %.c %.h  makefile
 	${COMPILER} ${CFLAGS} -lm $< -c
