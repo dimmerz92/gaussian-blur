@@ -78,6 +78,8 @@ void assign_rows(int nproc, int height, int width, double std_dev, int *counts,
     }
 }
 
+/* flattens a BMP image to a 1D array, with three positions for every pixel */
+/* as the RBG values */
 void flatten_image(BMP *bmp, UCHAR *flat_img, int start, int stop,
                    int width, int accum_offset) {
     UCHAR r, g, b;
