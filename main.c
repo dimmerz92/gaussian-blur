@@ -23,7 +23,6 @@ int main(int argc, char **argv) {
 
     // init kernal dim and origin
     kernel_dim = 2 * KERNEL_DIMENSION_SD * std_dev + 1;
-    //origin = KERNEL_DIMENSION_SD * std_dev;
     origin = (kernel_dim - 1) / 2;
 
     // allocate and init kernel
